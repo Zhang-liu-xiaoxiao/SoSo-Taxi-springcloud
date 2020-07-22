@@ -3,9 +3,15 @@ package com.apicaller.sosotaxi.controller;
 
 import com.apicaller.sosotaxi.entity.GeoPoint;
 import com.apicaller.sosotaxi.entity.ResponseBean;
+import com.apicaller.sosotaxi.entity.bdmap.AroundSearchDriverResponse;
 import com.apicaller.sosotaxi.entity.dispatch.dto.GenerateOrderDTO;
 
-import org.junit.Test;
+
+import com.apicaller.sosotaxi.service.DispatchServiceImpl;
+import com.apicaller.sosotaxi.utils.BDmapUtil;
+import com.apicaller.sosotaxi.utils.CoordType;
+import com.apicaller.sosotaxi.utils.YingYanUtil;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,19 +23,21 @@ import java.util.Date;
 import java.util.List;
 
 
-
+import javax.annotation.Resource;
 import javax.websocket.Session;
 
 /**
  * @author 张流潇潇
  * @createTime 2020/7/15
- * @updateTime
+ * @updateTime 2020/7/22
  */
 @RestController
 @RequestMapping("/dispatch")
 public class DispatchController {
 
 
+    @Resource
+    DispatchServiceImpl dispatchService;
     /**
      * 获取给定地点附近的司机。
      * @param lat
@@ -38,11 +46,12 @@ public class DispatchController {
      */
     @GetMapping("/getNearbyDrivers")
     public ResponseBean getNearbyDrivers(double lat, double lng) {
-        List<GeoPoint> result = new ArrayList<GeoPoint>();
-        result.add(new GeoPoint(40.058922, 116.312615));
-        result.add(new GeoPoint(40.058939, 116.312675));
-        result.add(new GeoPoint(40.058522, 116.382615));
-        return new ResponseBean(200, null, result);
+
+        List<GeoPoint> result = dispatchService.getNearbyDrivers(lat, lng);
+        if(result == null || result.isEmpty()) {
+            return new ResponseBean(404, "未在周围找到司机", null);
+        }
+        return new ResponseBean(200, "在周围找到司机", result);
     }
 
     /**
@@ -63,6 +72,7 @@ public class DispatchController {
     public ResponseBean getPricingMethod(double lat, double lng, Date date, Short serviceType) {
         List<AvailableServiceCalResponse> result = new ArrayList<AvailableServiceCalResponse>();
         result.add(new AvailableServiceCalResponse(0, 1.2, 0.2, "CNY", 0.2, 6.5));
+        result.add(new AvailableServiceCalResponse(1, 1.4, 0.3, "CNY", 0.3, 8));
         return new ResponseBean(200, null, result);
     }
 
@@ -71,10 +81,8 @@ public class DispatchController {
      */
     @GetMapping("/getEstimateTime")
     public ResponseBean getEstimateTime(double lat, double lng, Short serviceType) {
-        List<EstimateTimeResponse> result = new ArrayList<EstimateTimeResponse>();
-        result.add(new EstimateTimeResponse(0, 102));
-        result.add(new EstimateTimeResponse(1, 66));
-        return new ResponseBean(200, null, result);
+        int time = dispatchService.getEstimateTime(lat, lng, serviceType);
+        return new ResponseBean(200, null, time);
     }
 
     /**
