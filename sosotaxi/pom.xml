@@ -16,7 +16,6 @@
     <module>user-service</module>
     <module>common</module>
     <module>dispatch-service</module>
-
   </modules>
   
 
