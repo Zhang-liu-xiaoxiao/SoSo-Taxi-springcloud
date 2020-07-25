@@ -40,6 +40,9 @@ public class DriverAnswerOrderHandler implements MessageHandler<DriverAnswerOrde
     DriverFeignClient driverFeignClient;
 
     @Resource
+    OrderFeignClient orderFeignClient;
+
+    @Resource
     DispatchFeignClient dispatchFeignClient;
 
     @Override
@@ -69,6 +72,8 @@ public class DriverAnswerOrderHandler implements MessageHandler<DriverAnswerOrde
             }
             realOrder.setDriverId(driverVo.getUserId());
             DriverCarInfoResponse driverCarInfoResponse = DriverCarInfoResponse.fromDriver(driver);
+            driverCarInfoResponse.setRate(orderFeignClient.getDriverAvgRate(driverVo.getUserId()));
+            driverCarInfoResponse.setOrderNum(orderFeignClient.getDriverOrderNum(driverVo.getUserId()));
             driverAnswerResponse.setDriverCarInfo(driverCarInfoResponse);
             driverAnswerResponse.setStatusCode(200);
             driverAnswerResponse.setMsg("司机已接单");
@@ -89,12 +94,12 @@ public class DriverAnswerOrderHandler implements MessageHandler<DriverAnswerOrde
             double lng = jsonObject.getJSONObject("latest_point").getDouble("longitude");
             GeoPoint point = new GeoPoint(lat,lng);
             OpsForOrderMsg oMsg = new OpsForOrderMsg(point, driver.getUserName(), order.getOrderId().toString());
-            UnsettledOrder uOrder = dispatchFeignClient.accept(oMsg);
-            if(uOrder!=null){
+            //UnsettledOrder uOrder = dispatchFeignClient.accept(oMsg);
+            //if(uOrder!=null){
                 //TODO:接单成功后的动作
-            }else{
+            //}else{
                 //TODO:接单失败后的动作
-            }
+            //}
             ///
 
             YingYanUtil.updateDriver(driver.getUserName(), false);
@@ -124,12 +129,12 @@ public class DriverAnswerOrderHandler implements MessageHandler<DriverAnswerOrde
             double lng = jsonObject.getJSONObject("latest_point").getDouble("longitude");
             GeoPoint point = new GeoPoint(lat,lng);
             OpsForOrderMsg oMsg = new OpsForOrderMsg(point, driver.getUserName(), order.getOrderId().toString());
-            MinimizedDriver anotherDriver = dispatchFeignClient.refuseOrder(oMsg);
-            if(anotherDriver == null){
-                //TODO:通知乘客该段时间暂无可用司机
-            }else{
-                //TODO:通知该司机
-            }
+//            MinimizedDriver anotherDriver = dispatchFeignClient.refuseOrder(oMsg);
+//            if(anotherDriver == null){
+//                //TODO:通知乘客该段时间暂无可用司机
+//            }else{
+//                //TODO:通知该司机
+//            }
             //无论是否成功接单。都需要司机重新听单
             YingYanUtil.updateDriver(driver.getUserName(), false);
             ///
